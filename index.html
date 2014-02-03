@@ -1,0 +1,219 @@
+<html>
+  <head>
+	<!--<script src='http://cdn.html5quintus.com/v0.2.0/quintus-all.js'></script>-->
+    <script src='quintus-all.js'></script>
+	<style>
+		canvas { background-color: grey; }
+	</style>
+  </head>
+   <body>
+     <script>
+		// This game uses spritesheet.png from:
+	 	// http://opengameart.org/content/platformer-art-pixel-redux
+		var Q = Quintus()
+			.include("Sprites, Scenes, Input, 2D, Touch, UI")
+			.setup({maximize: true})
+			.controls();
+
+		// Enable touch/clicks on sprites
+		//
+		Q.touch(Q.SPRITE_ALL);
+
+
+		// Block
+		//
+		Q.Sprite.extend("Block",
+		{
+			init: function(p)
+			{
+				p.sheet = "blocks";
+				this._super(p);
+
+				this.on("mouseover");
+				this.on("mouseout");
+				this.on("touchEnd");
+			},
+
+			// Our puzzle block logic to determine a match
+			//
+			puzzle_matches: function(block)
+			{
+				console.log("blocks", this.p.frame, block.p.frame);
+				var  exact_match = this.p.frame == block.p.frame;
+
+				// 6 apart on the sprite sheet
+				var symbol_match = Math.abs(this.p.frame - block.p.frame) % 6 == 0;
+
+				// Same row on the sprite sheet
+				var color_match = Math.floor(this.p.frame / 6) == Math.floor(block.p.frame / 6);
+
+
+				return block != this && (exact_match || symbol_match || color_match);
+			},
+
+			mouseover: function()
+			{
+				this.p.scale = 1.5;
+			},
+
+			mouseout: function()
+			{
+				this.p.scale = 1.0;
+			},
+
+			touchEnd: function()
+			{
+				// If previously selected block
+				// Do match check destroy both
+				//
+				var selected_block = Q.state.get("selected_block");
+
+				if(selected_block)
+				{
+					if(this.puzzle_matches(selected_block))
+					{
+						this.destroy();
+						selected_block.destroy();
+					}
+					// Reset for new match
+					//
+					Q.state.set("selected_block", null);
+					// trigger
+					selected_block.p.angle = 0;
+				}
+				// Else mark as selected block
+				//
+				else
+				{
+					Q.state.set("selected_block", this);
+					// trigger
+					this.p.angle = 45;
+				}
+
+			}
+
+			// add a 'selected' marker
+		});
+
+
+		// Game specific puzzle data to draw in a grid
+		//
+		var puzzle_grid = [
+			[ 0, 1, 2, 3, 4, 5],
+			[ 6, 7, 8, 9,10,11],
+			[12,13,14,15,16,17],
+			[18,19,20,21,22,23],
+			[24,25,26,27,28,29],
+			[30,31,32,33,34,35],
+			[36,37,38,39,40,41],
+			[42,43,44,45,46,47],
+			[48,49,50,51,52,53],
+			[54,55,56,57,58,59]
+		];
+
+
+		// The level with game objects in it
+		//
+		Q.scene("level1",function(stage)
+		{
+			// 3x scale retro look
+			//
+			stage.add('viewport');
+			stage.viewport.scale = 3.0;
+
+			// Loop over the puzzle data and show it
+			//
+			puzzle_grid.forEach(function(row, row_index)
+			{
+				row.forEach(function(block_type, column_index)
+				{
+					// Randomize for fun
+					//
+					var block_type = Math.floor(Math.random() * 96);
+
+					var x_position =    row_index * 20 + 50;
+					var y_position = column_index * 20 + 50;
+					stage.insert(new Q.Block({x: x_position, y: y_position, frame: block_type}));
+				});
+			});
+		});
+
+
+		// Game assets, level data, images, music, sounds
+		//
+		var assets = ["match3_db16_2.png"];
+
+
+		// Load assets and launch the first scene to start the game
+		//
+		Q.load(assets , function()
+		{
+			Q.sheet("blocks","match3_db16_2.png", {
+				tileW: 16,
+				tileH: 16
+			});
+
+			Q.state.reset({current_object: null, score: 0});
+			Q.stageScene("level1");
+		});
+
+
+		// Send a mouse over event to the blocks
+		//
+		Q.el.addEventListener('mousemove',function(e) {
+			var x = e.offsetX || e.layerX,
+				y = e.offsetY || e.layerY;
+
+			var stage = Q.stage();
+
+			// translate from canvas to stage coordinates
+			//
+			var stageX = Q.canvasToStageX(x, stage),
+				stageY = Q.canvasToStageY(y, stage);
+
+			// Find the first object at that position on the stage
+			//
+			var object_under_mouse = stage.locate(stageX,stageY);
+			var current_object     = Q.state.get("current_object");
+
+			// Something is under the cursor
+			//
+			if(object_under_mouse)
+			{
+				// Its a new object
+				//
+				if(object_under_mouse != current_object)
+				{
+					// Tell the object we just moved away from.
+					//
+					if(current_object)
+					{
+						current_object.p.over = false;
+						current_object.trigger("mouseout");
+					}
+
+					// Remember object for next time mouse is moved
+					//
+					Q.state.set("current_object", object_under_mouse);
+					object_under_mouse.p.over = true;
+					object_under_mouse.trigger("mouseover");
+				}
+			}
+			// Nothing is under the cursor
+			//
+			else
+			{
+				// Tell the object we just moved away from.
+				//
+				if(current_object)
+				{
+					Q.state.set("current_object", null);
+					current_object.p.over = false;
+					current_object.trigger("mouseout");
+				}
+			}
+		});
+   </script>
+   </body>
+</html>
+
