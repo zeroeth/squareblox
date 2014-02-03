@@ -73,6 +73,7 @@
 					{
 						this.destroy();
 						selected_block.destroy();
+						Q.stage().trigger("blocks_remove_match");
 					}
 					// Reset for new match
 					//
@@ -116,15 +117,20 @@
 		Q.scene("level1",function(stage)
 		{
 
-			stage.on("removed", function()
+			stage.on("blocks_remove_match", function()
 			{
 				// Check all blocks against all blocks
 				// TODO move to a less niave early out style.
+				//
 				var matches_left = false;
 				Q("Block").items.forEach(function(first_block)
 				{
+					if(first_block.isDestroyed) { return; }
+
 					Q("Block").items.some(function(second_block)
 					{
+						if(second_block.isDestroyed) { return; }
+
 						if(first_block.puzzle_matches(second_block))
 						{
 							matches_left = true;
@@ -133,9 +139,19 @@
 					});
 				});
 
+				// Find remaining pieces on board
+				//
 				if(!matches_left)
 				{
-					alert("Thats a wrap!");
+					var blocks_left = false;
+					var block_count = 0;
+
+					Q("Block").items.forEach(function(block) {
+						if(!block.isDestroyed) { blocks_left = true; block_count += 1; }
+					});
+
+					if(blocks_left) { alert("So close! "+block_count+" left."); }
+					else            { alert("YOU WON!!!!ELEVENDY"); }
 				}
 			});
 
@@ -171,7 +187,7 @@
 		//
 		Q.load(assets , function()
 		{
-			Q.sheet("blocks","match3_db16_2.png", {
+			Q.sheet("blocks", "match3_db16_2.png", {
 				tileW: 16,
 				tileH: 16
 			});
