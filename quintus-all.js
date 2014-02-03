@@ -2345,6 +2345,7 @@ Quintus["2D"] = function(Q) {
       Q.ctx.save();
       Q.ctx.translate(Math.floor(Q.width/2),Math.floor(Q.height/2));
       Q.ctx.scale(this.scale,this.scale);
+	  Q.ctx.rotate(this.angle || 0);
       Q.ctx.translate(-Math.floor(this.centerX), -Math.floor(this.centerY));
     },
 

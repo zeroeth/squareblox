@@ -54,7 +54,8 @@
 
 			mouseover: function()
 			{
-				this.p.scale = 1.5;
+				this.p.scale = 1.25;
+				// animation..
 			},
 
 			mouseout: function()
@@ -101,16 +102,16 @@
 		// Game specific puzzle data to draw in a grid
 		//
 		var puzzle_grid = [
-			[ 0, 1, 2, 3, 4, 5],
-			[ 6, 7, 8, 9,10,11],
-			[12,13,14,15,16,17],
-			[18,19,20,21,22,23],
-			[24,25,26,27,28,29],
-			[30,31,32,33,34,35],
-			[36,37,38,39,40,41],
-			[42,43,44,45,46,47],
-			[48,49,50,51,52,53],
-			[54,55,56,57,58,59]
+			[ 0, 1, 2, 3, 4, 5, 0, 0 ,0, 0, 0, 0, 0, 0, 0, 0, 0],
+			[ 6, 7, 8, 9,10,11, 0, 0 ,0, 0, 0, 0, 0, 0, 0, 0, 0],
+			[12,13,14,15,16,17, 0, 0 ,0, 0, 0, 0, 0, 0, 0, 0, 0],
+			[18,19,20,21,22,23, 0, 0 ,0, 0, 0, 0, 0, 0, 0, 0, 0],
+			[24,25,26,27,28,29, 0, 0 ,0, 0, 0, 0, 0, 0, 0, 0, 0],
+			[30,31,32,33,34,35, 0, 0 ,0, 0, 0, 0, 0, 0, 0, 0, 0],
+			[36,37,38,39,40,41, 0, 0 ,0, 0, 0, 0, 0, 0, 0, 0, 0],
+			[42,43,44,45,46,47, 0, 0 ,0, 0, 0, 0, 0, 0, 0, 0, 0],
+			[48,49,50,51,52,53, 0, 0 ,0, 0, 0, 0, 0, 0, 0, 0, 0],
+			[54,55,56,57,58,59, 0, 0 ,0, 0, 0, 0, 0, 0, 0, 0, 0]
 		];
 
 
@@ -160,7 +161,19 @@
 			// 3x scale retro look
 			//
 			stage.add('viewport');
-			stage.viewport.scale = 3.0;
+			stage.viewport.scale =  3.0;
+
+			stage.on("step", function(ztage) {
+				if(Q.inputs["fire"]) {
+					stage.viewport.angle = Math.sin(Date.now()/1000);
+					stage.viewport.scale = 2 + Math.sin(Date.now()/250);
+				}
+				else
+				{
+					stage.viewport.angle = 0;
+					stage.viewport.scale = 3.0;
+				}
+			});
 
 			// Loop over the puzzle data and show it
 			//
@@ -172,8 +185,8 @@
 					//
 					var block_type = Math.floor(Math.random() * 96);
 
-					var x_position =    row_index * 20 + 50;
-					var y_position = column_index * 20 + 50;
+					var x_position = column_index * 18 + 20;
+					var y_position =    row_index * 18 + 20;
 					stage.insert(new Q.Block({x: x_position, y: y_position, frame: block_type}));
 				});
 			});
@@ -202,10 +215,18 @@
 		// Send a mouse over event to the blocks
 		//
 		Q.el.addEventListener('mousemove',function(e) {
-			var x = e.offsetX || e.layerX,
-				y = e.offsetY || e.layerY;
+			var original_x = e.offsetX || e.layerX,
+				original_y = e.offsetY || e.layerY;
 
 			var stage = Q.stage();
+
+			var half_x = 0; Q.el.width/2;
+			var half_y = 0; Q.el.height/2;
+
+			var angle = stage.viewport.angle;
+
+			var x = half_x + Math.cos(angle) * (original_x - half_x) - Math.sin(angle) * (-original_y - half_y);
+			var y = half_y + Math.sin(angle) * (original_x - half_x) - Math.cos(angle) * (-original_y - half_y);
 
 			// translate from canvas to stage coordinates
 			//
