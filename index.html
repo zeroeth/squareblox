@@ -38,7 +38,6 @@
 			//
 			puzzle_matches: function(block)
 			{
-				console.log("blocks", this.p.frame, block.p.frame);
 				var  exact_match = this.p.frame == block.p.frame;
 
 				// 6 apart on the sprite sheet
@@ -116,6 +115,30 @@
 		//
 		Q.scene("level1",function(stage)
 		{
+
+			stage.on("removed", function()
+			{
+				// Check all blocks against all blocks
+				// TODO move to a less niave early out style.
+				var matches_left = false;
+				Q("Block").items.forEach(function(first_block)
+				{
+					Q("Block").items.some(function(second_block)
+					{
+						if(first_block.puzzle_matches(second_block))
+						{
+							matches_left = true;
+							return true;
+						}
+					});
+				});
+
+				if(!matches_left)
+				{
+					alert("Thats a wrap!");
+				}
+			});
+
 			// 3x scale retro look
 			//
 			stage.add('viewport');
